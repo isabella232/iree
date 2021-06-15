@@ -23,6 +23,52 @@ namespace Flow {
 // Pipelines
 //===----------------------------------------------------------------------===//
 
+/// Options for Flow transformation pipeline.
+struct FlowTransformPassPipelineOptions
+    : public PassPipelineOptions<FlowTransformPassPipelineOptions> {
+  Option<bool> exportBenchmarkFuncs{
+      *this, "export-benchmark-funcs",
+      llvm::cl::desc(
+          "Exports one function per original module entry point and "
+          "unique flow.executable that dispatches with dummy arguments."),
+      llvm::cl::init(false)};
+
+  Option<bool> traceDispatchTensors{
+      *this, "trace-dispatch-tensors2",
+      llvm::cl::desc(
+          "Trace runtime input/output tensors for each dispatch function."),
+      llvm::cl::init(false)};
+
+  Option<bool> demoteF32ToF16{
+      *this, "demote-f32-to-f16",
+      llvm::cl::desc("Convert all f32 ops and values into f16 counterparts "
+                     "unconditionally before main flow conversions"),
+      llvm::cl::init(false)};
+
+  Option<bool> enable1x1ConvToMatmul{
+      *this, "enable-1x1-conv-to-matmul",
+      llvm::cl::desc("Enable converting 1x1 linalg convolution ops to linalg "
+                     "matmul ops pass."),
+      llvm::cl::init(true)};
+
+  Option<bool> enableConvToImg2Col{
+      *this, "enable-conv-img2col-transform",
+      llvm::cl::desc("Enable converting convolution ops to img2col form."),
+      llvm::cl::init(false)};
+
+  Option<bool> enablePaddingLinalgOps{
+      *this, "enable-padding-linalg-ops",
+      llvm::cl::desc("Enable padding linalg ops to an integer multiple of "
+                     "flow-padding-size"),
+      llvm::cl::init(false)};
+
+  Option<int> linalgOpsPaddingSize{
+      *this, "linalg-ops-padding-size",
+      llvm::cl::desc("Enable padding linalg ops to an integer multiple of "
+                     "flow-padding-size"),
+      llvm::cl::init(4)};
+};
+
 // Performs input legalization for specific combination of input dialects.
 void buildMHLOInputTransformPassPipeline(OpPassManager &passManager);
 void buildTOSAInputTransformPassPipeline(OpPassManager &passManager);
@@ -42,7 +88,9 @@ void registerInputTransformPassPipeline();
 //     - buildMHLOInputTransformPassPipeline
 //   buildFlowTransformPassPipeline
 //   <run conversion from flow to sequencer/hal/vm/etc>
-void buildFlowTransformPassPipeline(OpPassManager &passManager);
+void buildFlowTransformPassPipeline(
+    OpPassManager &passManager,
+    const FlowTransformPassPipelineOptions &options);
 
 void registerFlowTransformPassPipeline();
 
